@@ -16,11 +16,11 @@ export const AuthLoader = () => {
       if (session === null && user?.id !== null) {
         await apiClient.api.private.session.$delete().catch(returnNull);
         setUser(null);
-      } else if (session !== null && user?.id !== session.user.id) {
+      } else if (session !== null && user?.id !== session.user?.id) {
         const jwt = session.access_token;
         await apiClient.api.private.session.$post({ body: { jwt } }).catch(returnNull);
         const { id, email } = session.user;
-        const name = session.user.user_metadata.full_name;
+        const name = session.user.user_metadata?.full_name;
         setUser({ id, email, name } as UserModel);
       }
     });
