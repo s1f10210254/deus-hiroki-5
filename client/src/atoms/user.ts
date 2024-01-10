@@ -1,4 +1,3 @@
-import { Riddle } from '$/api/@types';
 import { atom } from 'jotai';
 
 export type UserModel = {

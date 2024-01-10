@@ -1,10 +1,10 @@
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { useState } from 'react';
+import type { UserModel } from 'src/atoms/user';
 import { Modal, ModalBody } from 'src/components/Modal/Modal';
 import { APP_TITLE } from 'src/utils/constants';
 import { supabase } from 'src/utils/supabase';
-import { UserModel } from 'src/atoms/user';
 import styles from './BasicHeader.module.css';
 
 export const BasicHeader = (props: { user: UserModel | null }) => {
