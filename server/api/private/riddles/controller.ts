@@ -1,6 +1,6 @@
+import type { RiddleCreate } from '$/api/@types';
 import { prismaClient } from '$/service/prismaClient';
 import { defineController } from './$relay';
-import type { RiddleCreate } from '$/api/@types';
 
 export default defineController(() => ({
   post: async ({ body }) => {
@@ -11,9 +11,9 @@ export default defineController(() => ({
         question: riddle.question,
         answer: riddle.answer,
         createdBy: 'userId', // 仮のユーザーID
-        createdAt: new Date().toISOString()
-      }
+        createdAt: new Date().toISOString(),
+      },
     });
     return { status: 201, body: createdRiddle };
-  }
+  },
 }));

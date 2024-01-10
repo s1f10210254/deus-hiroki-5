@@ -1,6 +1,6 @@
+import type { GuessCreate } from '$/api/@types';
 import { prismaClient } from '$/service/prismaClient';
 import { defineController } from './$relay';
-import type { GuessCreate } from '$/api/@types';
 
 export default defineController(() => ({
   post: async ({ params, body }) => {
@@ -17,9 +17,9 @@ export default defineController(() => ({
         userId: 'userId', // 仮のユーザーID
         guess: guess.guess,
         isCorrect,
-        createdAt: new Date().toISOString()
-      }
+        createdAt: new Date().toISOString(),
+      },
     });
     return { status: 201, body: createdGuess };
-  }
+  },
 }));
