@@ -1,6 +1,6 @@
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
-import { userAtom } from 'src/atoms/user';
+import { userAtom, UserModel } from 'src/atoms/user';
 import { apiClient } from 'src/utils/apiClient';
 import { returnNull } from 'src/utils/returnNull';
 import { supabase } from 'src/utils/supabase';
@@ -16,10 +16,12 @@ export const AuthLoader = () => {
         await apiClient.api.private.session.$delete().catch(returnNull);
         setUser(null);
       } else if (session !== null && user?.id !== session.user.id) {
+        const jwt = session.access_token;
         await apiClient.api.private.session
-          .$post({ body: { jwt: session?.access_token } })
+          .$post({ body: { jwt } })
           .catch(returnNull);
-        await apiClient.api.private.me.$get().catch(returnNull).then(setUser);
+        const { id, email, name } = session.user;
+        setUser({ id, email, name } as UserModel);
       }
     });
 
