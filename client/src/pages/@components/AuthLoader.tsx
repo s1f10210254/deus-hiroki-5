@@ -1,6 +1,7 @@
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
-import { userAtom, UserModel } from 'src/atoms/user';
+import type { UserModel } from 'src/atoms/user';
+import { userAtom } from 'src/atoms/user';
 import { apiClient } from 'src/utils/apiClient';
 import { returnNull } from 'src/utils/returnNull';
 import { supabase } from 'src/utils/supabase';
@@ -11,16 +12,15 @@ export const AuthLoader = () => {
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session === null && user?.id !== null) {
         await apiClient.api.private.session.$delete().catch(returnNull);
         setUser(null);
       } else if (session !== null && user?.id !== session.user.id) {
         const jwt = session.access_token;
-        await apiClient.api.private.session
-          .$post({ body: { jwt } })
-          .catch(returnNull);
-        const { id, email, name } = session.user;
+        await apiClient.api.private.session.$post({ body: { jwt } }).catch(returnNull);
+        const { id, email } = session.user;
+        const name = session.user.user_metadata.full_name;
         setUser({ id, email, name } as UserModel);
       }
     });
