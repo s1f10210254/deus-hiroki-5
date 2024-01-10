@@ -8,19 +8,31 @@ generator client {
 }
 
 model User {
-  id        String   @id
-  email     String
-  name      String
-  createdAt DateTime
-  tasks     Task[]
+  id             String   @id @default(uuid())
+  email          String   @unique
+  name           String?
+  riddlesCreated Riddle[] @relation("createdBy")
+  riddleGuesses  Guess[]  @relation("guessedBy")
 }
 
-model Task {
-  id        String   @id
-  label     String
-  done      Boolean
-  imageKey  String?
-  createdAt DateTime
-  User      User     @relation(fields: [userId], references: [id])
+model Riddle {
+  id        String   @id @default(uuid())
+  title     String
+  question  String
+  answer    String
+  createdAt DateTime @default(now())
+  createdBy User     @relation(name: "createdBy", fields: [creatorId], references: [id])
+  creatorId String
+  guesses   Guess[]  @relation("riddleGuesses")
+}
+
+model Guess {
+  id        String   @id @default(uuid())
+  riddleId  String
   userId    String
+  guess     String
+  isCorrect Boolean
+  createdAt DateTime @default(now())
+  riddle    Riddle   @relation(name: "riddleGuesses", fields: [riddleId], references: [id])
+  user      User     @relation(name: "guessedBy", fields: [userId], references: [id])
 }
