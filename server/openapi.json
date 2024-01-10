@@ -1,0 +1,204 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Riddle Service API",
+    "version": "1.0.0",
+    "description": "API for a riddle guessing service where users can create riddles and guess the answers."
+  },
+  "servers": [
+    {
+      "url": "https://your-riddle-service.com/"
+    }
+  ],
+  "paths": {
+    "/api/public/riddles": {
+      "get": {
+        "summary": "List all public riddles",
+        "operationId": "listRiddles",
+        "responses": {
+          "200": {
+            "description": "An array of riddles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Riddle"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/private/riddles": {
+      "post": {
+        "summary": "Create a new riddle",
+        "operationId": "createRiddle",
+        "requestBody": {
+          "description": "Riddle to be created",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiddleCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Riddle created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Riddle"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/private/riddles/{riddleId}/guesses": {
+      "post": {
+        "summary": "Submit a guess for a riddle",
+        "operationId": "submitGuess",
+        "parameters": [
+          {
+            "name": "riddleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "User's guess for the riddle",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuessCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Guess submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Guess"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Riddle": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "question",
+          "answer",
+          "createdAt",
+          "createdBy"
+        ]
+      },
+      "RiddleCreate": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "question",
+          "answer"
+        ]
+      },
+      "Guess": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "riddleId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "guess": {
+            "type": "string"
+          },
+          "isCorrect": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "riddleId",
+          "userId",
+          "guess",
+          "isCorrect",
+          "createdAt"
+        ]
+      },
+      "GuessCreate": {
+        "type": "object",
+        "properties": {
+          "guess": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "guess"
+        ]
+      }
+    }
+  }
+}
