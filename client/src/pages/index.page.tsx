@@ -1,4 +1,4 @@
-import type { RiddleModel } from '$/api/@types/models';
+import type { Riddle } from '$/api/@types';
 import { useAtom } from 'jotai';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useEffect, useState } from 'react';
@@ -9,7 +9,7 @@ import styles from './index.module.css';
 
 const Home = () => {
   const [user] = useAtom(userAtom);
-  const [riddles, setRiddles] = useState<RiddleModel[]>();
+  const [riddles, setRiddles] = useState<Riddle[]>();
   const [title, setTitle] = useState('');
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
@@ -32,7 +32,9 @@ const Home = () => {
     e.preventDefault();
     if (!title || !question || !answer) return;
 
-    await apiClient.api.private.riddles.$post({ body: { title, question, answer } }).catch(returnNull);
+    await apiClient.api.private.riddles
+      .$post({ body: { title, question, answer } })
+      .catch(returnNull);
     setTitle('');
     setQuestion('');
     setAnswer('');
