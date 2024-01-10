@@ -1,10 +1,10 @@
 /* eslint-disable */
-import type * as Types from '../../../@types'
+import type * as Types from '../../../@types';
 
 export type Methods = {
   get: {
-    status: 200
+    status: 200;
     /** An array of riddles */
-    resBody: Types.Riddle[]
-  }
-}
+    resBody: Types.Riddle[];
+  };
+};
