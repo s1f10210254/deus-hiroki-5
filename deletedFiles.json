@@ -1,0 +1,90 @@
+[
+  {
+    "source": "server/api/@types/models.ts",
+    "content": "export type UserModel = {\n  id: string;\n  email: string;\n  name: string;\n  createdTime: number;\n};\n\nexport type TaskModel = {\n  id: string;\n  label: string;\n  done: boolean;\n  createdTime: number;\n  image: { url: string; s3Key: string } | undefined;\n  author: { userId: string; name: string };\n};\n"
+  },
+  {
+    "source": "server/api/controller.ts",
+    "content": "import { defineController } from './$relay';\n\nexport default defineController(() => ({\n  get: () => ({ status: 200, body: '' }),\n}));\n"
+  },
+  {
+    "source": "server/api/health/controller.ts",
+    "content": "import { prismaClient } from '$/service/prismaClient';\nimport { defineController } from './$relay';\n\nexport default defineController(() => ({\n  get: async () => ({\n    status: 200,\n    body: {\n      server: 'ok',\n      db: await prismaClient.$queryRaw`SELECT CURRENT_TIMESTAMP;`.then(() => 'ok' as const),\n    },\n  }),\n}));\n"
+  },
+  {
+    "source": "server/api/health/index.ts",
+    "content": "import type { DefineMethods } from 'aspida';\n\nexport type Methods = DefineMethods<{\n  get: {\n    resBody: Record<'server' | 'db', 'ok'>;\n  };\n}>;\n"
+  },
+  {
+    "source": "server/api/index.ts",
+    "content": "import type { DefineMethods } from 'aspida';\n\nexport type Methods = DefineMethods<{\n  get: {\n    resBody: string;\n  };\n}>;\n"
+  },
+  {
+    "source": "server/api/private/controller.ts",
+    "content": "import { defineController } from './$relay';\n\nexport default defineController(() => ({\n  get: () => ({ status: 200, body: 'Hello' }),\n}));\n"
+  },
+  {
+    "source": "server/api/private/hooks.ts",
+    "content": "import type { JwtUser } from '$/domain/model/userModel';\nimport { userRepo } from '$/domain/repository/userRepo';\nimport type { JWT_PROP_NAME } from '$/service/constants';\nimport { prismaClient } from '$/service/prismaClient';\nimport assert from 'assert';\nimport type { UserModel } from '../@types/models';\nimport { defineHooks } from './$relay';\n\nexport type AdditionalRequest = {\n  [Key in typeof JWT_PROP_NAME]: JwtUser;\n} & { user: UserModel };\n\nexport default defineHooks(() => ({\n  onRequest: async (req, res) => {\n    try {\n      await req.jwtVerify({ onlyCookie: true });\n    } catch (e) {\n      res.status(401).send();\n      return;\n    }\n  },\n  preHandler: async (req, res) => {\n    assert(req.jwtUser);\n\n    const user = await userRepo.findById(prismaClient, req.jwtUser.sub);\n\n    if (user === null) {\n      res.status(401).send();\n      return;\n    }\n\n    req.user = user;\n  },\n}));\n"
+  },
+  {
+    "source": "server/api/private/index.ts",
+    "content": "import type { DefineMethods } from 'aspida';\n\nexport type Methods = DefineMethods<{\n  get: {\n    resBody: string;\n  };\n}>;\n"
+  },
+  {
+    "source": "server/api/private/me/controller.ts",
+    "content": "import { userUseCase } from '$/domain/useCase/userUseCase';\nimport assert from 'assert';\nimport { defineController } from './$relay';\n\nexport default defineController(() => ({\n  post: {\n    hooks: {\n      preValidation: async (req) => {\n        assert(req.jwtUser);\n\n        await userUseCase.findOrCreate(req.jwtUser);\n      },\n    },\n    handler: ({ user }) => ({ status: 200, body: user }),\n  },\n}));\n"
+  },
+  {
+    "source": "server/api/private/me/index.ts",
+    "content": "import type { UserModel } from '$/api/@types/models';\nimport type { DefineMethods } from 'aspida';\n\nexport type Methods = DefineMethods<{\n  post: {\n    resBody: UserModel;\n  };\n}>;\n"
+  },
+  {
+    "source": "server/api/private/tasks/controller.ts",
+    "content": "import { taskUseCase } from '$/domain/useCase/taskUseCase';\nimport { z } from 'zod';\nimport { defineController, multipartFileValidator } from './$relay';\n\nexport default defineController(() => ({\n  post: {\n    validators: {\n      body: z.object({ label: z.string(), image: multipartFileValidator().optional() }),\n    },\n    handler: async ({ user, body }) => ({\n      status: 201,\n      body: await taskUseCase.create(user, body.label, body.image),\n    }),\n  },\n  patch: {\n    validators: {\n      body: z.object({\n        taskId: z.string(),\n        done: z.boolean(),\n        label: z.string(),\n      }),\n    },\n    handler: async ({ user, body }) => {\n      const task = await taskUseCase.update(user, body.taskId, body.done, body.label);\n\n      return { status: 204, body: task };\n    },\n  },\n  delete: async ({ user, body }) => {\n    await taskUseCase.delete(user, body.taskId);\n\n    return { status: 204 };\n  },\n}));\n"
+  },
+  {
+    "source": "server/api/private/tasks/index.ts",
+    "content": "import type { TaskModel } from '$/api/@types/models';\nimport type { DefineMethods } from 'aspida';\n\nexport type Methods = DefineMethods<{\n  post: {\n    reqFormat: FormData;\n    reqBody: {\n      label: string;\n      image?: Blob;\n    };\n    resBody: TaskModel;\n  };\n\n  patch: {\n    reqBody: {\n      taskId: string;\n      done: boolean;\n      label: string;\n    };\n    status: 204;\n    resBody: TaskModel;\n  };\n\n  delete: {\n    reqBody: {\n      taskId: string;\n    };\n    status: 204;\n  };\n}>;\n"
+  },
+  {
+    "source": "server/api/public/controller.ts",
+    "content": "import { defineController } from './$relay';\n\nexport default defineController(() => ({\n  get: () => ({ status: 200, body: 'Hello' }),\n}));\n"
+  },
+  {
+    "source": "server/api/public/index.ts",
+    "content": "import type { DefineMethods } from 'aspida';\n\nexport type Methods = DefineMethods<{\n  get: {\n    resBody: string;\n  };\n}>;\n"
+  },
+  {
+    "source": "server/api/public/tasks/controller.ts",
+    "content": "import { taskRepo } from '$/domain/repository/taskRepo';\nimport { prismaClient } from '$/service/prismaClient';\nimport { defineController } from './$relay';\n\nexport default defineController(() => ({\n  get: async ({ query }) => ({\n    status: 200,\n    body: await taskRepo.findAll(prismaClient, query?.limit),\n  }),\n}));\n"
+  },
+  {
+    "source": "server/api/public/tasks/index.ts",
+    "content": "import type { TaskModel } from '$/api/@types/models';\nimport type { DefineMethods } from 'aspida';\n\nexport type Methods = DefineMethods<{\n  get: {\n    query?: {\n      limit?: number;\n    };\n    resBody: TaskModel[];\n  };\n}>;\n"
+  },
+  {
+    "source": "server/api/session/controller.ts",
+    "content": "import { COOKIE_NAME } from '$/service/constants';\nimport type { CookieSerializeOptions } from '@fastify/cookie';\nimport type { Methods } from '.';\nimport { defineController } from './$relay';\n\nexport type AdditionalRequest = {\n  body: Methods['post']['reqBody'];\n};\n\nconst options: CookieSerializeOptions = {\n  httpOnly: true,\n  secure: true,\n  path: '/',\n  sameSite: 'none',\n};\n\nexport default defineController(() => ({\n  post: {\n    hooks: {\n      preHandler: (req, reply, done) => {\n        const expiresIn = 60 * 60 * 24 * 5 * 1000;\n\n        reply.setCookie(COOKIE_NAME, req.body?.jwt ?? '', {\n          ...options,\n          expires: new Date(Date.now() + expiresIn),\n        });\n\n        done();\n      },\n    },\n    handler: () => {\n      return { status: 200, body: { status: 'success' } };\n    },\n  },\n  delete: {\n    hooks: {\n      preHandler: (_, reply, done) => {\n        reply.clearCookie(COOKIE_NAME, options);\n        done();\n      },\n    },\n    handler: () => {\n      return { status: 200, body: { status: 'success' } };\n    },\n  },\n}));\n"
+  },
+  {
+    "source": "server/api/session/index.ts",
+    "content": "import type { DefineMethods } from 'aspida';\n\nexport type Methods = DefineMethods<{\n  post: {\n    reqBody: { jwt: string };\n    resBody: { status: 'success' };\n  };\n  delete: {\n    resBody: { status: 'success' };\n  };\n}>;\n"
+  },
+  {
+    "source": "client/src/pages/@components/PrivateTask/PrivateTask.module.css",
+    "content": ".editGroup,\n.btnGroup {\n  display: flex;\n  gap: 8px;\n}\n\n.labelInput {\n  width: 400px;\n  padding: 2px;\n}\n\n.btn {\n  padding: 2px;\n}\n\n@media screen and (max-width: 640px) {\n  .labelInput {\n    width: 100%;\n  }\n}\n"
+  },
+  {
+    "source": "client/src/pages/@components/PrivateTask/PrivateTask.tsx",
+    "content": "import type { TaskModel } from '$/api/@types/models';\nimport { useState, type ChangeEvent } from 'react';\nimport { apiClient } from 'src/utils/apiClient';\nimport { returnNull } from 'src/utils/returnNull';\nimport styles from './PrivateTask.module.css';\n\nexport const PrivateTask = (props: { task: TaskModel; fetchTasks: () => Promise<void> }) => {\n  const { task } = props;\n  const [editingTaskId, setEditingTaskId] = useState<string>();\n  const [editingLabel, setEditingLabel] = useState('');\n  const isEditing = editingTaskId === task.id;\n\n  const editLabel = (e: ChangeEvent<HTMLInputElement>) => {\n    setEditingLabel(e.target.value);\n  };\n  const toggleDone = async () => {\n    await apiClient.private.tasks\n      .patch({ body: { taskId: task.id, done: !task.done, label: task.label } })\n      .catch(returnNull);\n    await props.fetchTasks();\n  };\n  const deleteTask = async () => {\n    await apiClient.private.tasks.delete({ body: { taskId: task.id } }).catch(returnNull);\n    await props.fetchTasks();\n  };\n  const updateTaskLabel = async () => {\n    await apiClient.private.tasks\n      .patch({ body: { taskId: task.id, done: task.done, label: editingLabel } })\n      .catch(returnNull);\n    setEditingTaskId(undefined);\n    setEditingLabel('');\n    await props.fetchTasks();\n  };\n  const startEditTask = () => {\n    setEditingTaskId(task.id);\n    setEditingLabel(task.label);\n  };\n\n  return (\n    <label>\n      <div className={styles.editGroup}>\n        <input type=\"checkbox\" checked={task.done} onChange={toggleDone} />\n        {isEditing ? (\n          <input\n            type=\"text\"\n            value={editingLabel}\n            className={styles.labelInput}\n            onChange={editLabel}\n          />\n        ) : (\n          <span>{task.label}</span>\n        )}\n      </div>\n      <div className={styles.btnGroup}>\n        <input type=\"button\" value=\"DELETE\" className={styles.btn} onClick={deleteTask} />\n        {isEditing ? (\n          <input type=\"button\" value=\"SAVE\" className={styles.btn} onClick={updateTaskLabel} />\n        ) : (\n          <input type=\"button\" value=\"EDIT\" className={styles.btn} onClick={startEditTask} />\n        )}\n      </div>\n    </label>\n  );\n};\n"
+  },
+  {
+    "source": "client/src/pages/index.module.css",
+    "content": ".container {\n  max-width: 1000px;\n  margin: 0 auto;\n}\n\n.tasks {\n  width: 600px;\n  margin: 0 auto;\n  text-align: left;\n  list-style-type: none;\n  border-right: 1px solid #eee;\n  border-left: 1px solid #eee;\n}\n\n.createTask {\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n  justify-content: space-between;\n  padding: 16px;\n  border-bottom: 1px solid #eee;\n}\n\n.createTaskInput {\n  width: 400px;\n  padding: 4px;\n  border: none;\n}\n\n.taskHeader {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 16px 16px 8px;\n}\n\n.authorName {\n  display: flex;\n  gap: 8px;\n  align-self: center;\n  font-size: 20px;\n  font-weight: bold;\n  color: #555;\n}\n\n.label {\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n  padding: 8px 16px 16px;\n  border-bottom: 1px solid #eee;\n}\n\n.label > label {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  width: 100%;\n}\n\n.postBtn {\n  display: flex;\n  align-self: flex-end;\n  padding: 2px;\n}\n\n.taskImage {\n  width: 70%;\n  border: 1px solid #eee;\n  border-radius: 8px;\n}\n\n@media screen and (max-width: 640px) {\n  .tasks {\n    width: 100%;\n    border: none;\n  }\n\n  .labelInput,\n  .createTaskInput {\n    width: 100%;\n  }\n}\n"
+  },
+  {
+    "source": "client/src/pages/index.page.tsx",
+    "content": "import type { TaskModel } from '$/api/@types/models';\nimport { useAtom } from 'jotai';\nimport type { ChangeEvent, FormEvent } from 'react';\nimport { useEffect, useRef, useState } from 'react';\nimport { ElapsedTime } from 'src/components/ElapsedTime/ElapsedTime';\nimport { Loading } from 'src/components/Loading/Loading';\nimport { BasicHeader } from 'src/pages/@components/BasicHeader/BasicHeader';\nimport { apiClient } from 'src/utils/apiClient';\nimport { returnNull } from 'src/utils/returnNull';\nimport { userAtom } from '../atoms/user';\nimport { PrivateTask } from './@components/PrivateTask/PrivateTask';\nimport styles from './index.module.css';\n\nconst Home = () => {\n  const [user] = useAtom(userAtom);\n  const fileRef = useRef<HTMLInputElement | null>(null);\n  const [tasks, setTasks] = useState<TaskModel[]>();\n  const [label, setLabel] = useState('');\n  const [image, setImage] = useState<File>();\n  const [previewImageUrl, setPreviewImageUrl] = useState('');\n  const isPrivateTask = (task: TaskModel) => user?.id === task.author.userId;\n\n  const inputLabel = (e: ChangeEvent<HTMLInputElement>) => {\n    setLabel(e.target.value);\n  };\n  const inputFile = (e: ChangeEvent<HTMLInputElement>) => {\n    setImage(e.target.files?.[0]);\n  };\n  const fetchTasks = async () => {\n    const tasks = await apiClient.public.tasks.$get().catch(returnNull);\n\n    if (tasks !== null) setTasks(tasks);\n  };\n  const createTask = async (e: FormEvent) => {\n    e.preventDefault();\n    if (!label || !fileRef.current) return;\n\n    await apiClient.private.tasks.post({ body: { label, image } }).catch(returnNull);\n    setLabel('');\n    setImage(undefined);\n    setPreviewImageUrl('');\n    fileRef.current.value = '';\n    await fetchTasks();\n  };\n\n  useEffect(() => {\n    fetchTasks();\n  }, [user?.id]);\n\n  useEffect(() => {\n    if (!image) return;\n\n    const newUrl = URL.createObjectURL(image);\n    setPreviewImageUrl(newUrl);\n    return () => {\n      URL.revokeObjectURL(newUrl);\n    };\n  }, [image]);\n\n  if (!tasks) return <Loading visible />;\n\n  return (\n    <>\n      <BasicHeader user={user} />\n      <div className={styles.container}>\n        <ul className={styles.tasks}>\n          {user && (\n            <li className={styles.createTask}>\n              <input\n                type=\"text\"\n                placeholder=\"What is happening?!\"\n                value={label}\n                onChange={inputLabel}\n                className={styles.createTaskInput}\n              />\n              {image && <img src={previewImageUrl} className={styles.taskImage} />}\n              <input\n                type=\"file\"\n                ref={fileRef}\n                accept=\".png,.jpg,.jpeg,.gif,.webp,.svg\"\n                onChange={inputFile}\n              />\n              <button onClick={createTask} className={styles.postBtn}>\n                POST\n              </button>\n            </li>\n          )}\n          {tasks.map((task) => (\n            <div key={task.id}>\n              <li className={styles.taskHeader}>\n                <div className={styles.authorName}>{task.author.name}</div>\n                <ElapsedTime createdTime={task.createdTime} />\n              </li>\n              <li className={styles.label}>\n                {isPrivateTask(task) ? (\n                  <PrivateTask task={task} fetchTasks={fetchTasks} />\n                ) : (\n                  <span>{task.label}</span>\n                )}\n                {task.image && (\n                  <img src={task.image.url} alt={task.label} className={styles.taskImage} />\n                )}\n              </li>\n            </div>\n          ))}\n        </ul>\n      </div>\n    </>\n  );\n};\n\nexport default Home;\n"
+  }
+]
